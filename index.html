@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#000814" />
+  <meta name="description" content="ASTRA – Astronaut Health Intelligence System" />
+  <title>ASTRA — Astronaut Vision System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ================= LANDING / DASHBOARD ================= -->
+  <div id="dashboard" class="screen active">
+    <div class="stars"></div>
+    <div class="dashboard-content">
+      <div class="logo-mark">
+        <div class="ring"></div>
+        <div class="ring ring-2"></div>
+        <div class="core">A</div>
+      </div>
+      <h1 class="title">ASTRA</h1>
+      <p class="subtitle">ASTRONAUT HEALTH INTELLIGENCE SYSTEM</p>
+      <p class="mission-brief">
+        Long-duration missions expose astronauts to radiation, isolation, altered gravity
+        and closed environments. ASTRA monitors health indicators locally on-device and
+        provides decision-support when Earth communication is delayed.
+      </p>
+
+      <button id="enterVisionBtn" class="enter-btn">
+        <span class="btn-glow"></span>
+        <span class="btn-text">ENTER ASTRONAUT VISION</span>
+        <span class="btn-arrow">◈</span>
+      </button>
+
+      <div class="feature-chips">
+        <span>◉ Live Camera</span>
+        <span>◉ HUD Telemetry</span>
+        <span>◉ AI Health Copilot</span>
+        <span>◉ Emergency Mode</span>
+      </div>
+
+      <p class="disclaimer">
+        Camera access is requested only after you click the button. All processing is local.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================= PERMISSION VIEW ================= -->
+  <div id="permissionView" class="screen">
+    <div class="perm-card">
+      <div class="perm-icon">◉</div>
+      <h2>CAMERA PERMISSION REQUIRED</h2>
+      <p id="permMessage">
+        ASTRA uses your device's rear camera to render the first-person astronaut visor view.
+        Your camera feed is processed <strong>only on this device</strong> and is never uploaded.
+      </p>
+      <div class="perm-actions">
+        <button id="grantCamBtn" class="astro-btn primary">GRANT CAMERA ACCESS</button>
+        <button id="demoModeBtn" class="astro-btn">ENTER DEMO MODE</button>
+        <button id="backFromPermBtn" class="astro-btn ghost">← BACK</button>
+      </div>
+      <div class="perm-help">
+        <p><strong>Troubleshooting:</strong></p>
+        <ul>
+          <li>Ensure the page is served over <code>https://</code> or <code>localhost</code>.</li>
+          <li>iOS Safari: Settings → Safari → Camera → Allow</li>
+          <li>Chrome: click the lock icon → Site settings → Camera → Allow</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= ASTRONAUT VISION (HUD) ================= -->
+  <div id="visionView" class="screen vision">
+    <!-- Live camera layer -->
+    <video id="cameraFeed" autoplay playsinline muted></video>
+    <canvas id="demoCanvas" class="hidden"></canvas>
+
+    <!-- Helmet visor overlay -->
+    <div class="visor-overlay">
+      <div class="visor-curve top"></div>
+      <div class="visor-curve bottom"></div>
+      <div class="visor-left"></div>
+      <div class="visor-right"></div>
+      <div class="glass-glare"></div>
+      <div class="scan-line"></div>
+      <div class="scan-grid"></div>
+    </div>
+
+    <!-- HUD content -->
+    <div id="hud" class="hud">
+      <!-- TOP CENTER -->
+      <div class="hud-panel top-center">
+        <div class="mission-name" id="missionName">MISSION: ARTEMIS-VII</div>
+        <div class="mission-meta">
+          <div class="meta-item"><span class="lbl">MET</span><span class="val" id="metClock">00:00:00</span></div>
+          <div class="meta-item"><span class="lbl">UTC</span><span class="val" id="utcClock">--:--:--</span></div>
+          <div class="meta-item"><span class="lbl">STATUS</span><span class="val status-eva" id="evaStatus">EVA ACTIVE</span></div>
+        </div>
+      </div>
+
+      <!-- TOP LEFT: Environmental -->
+      <div class="hud-panel top-left">
+        <div class="panel-title">◈ ENVIRONMENT</div>
+        <div class="telemetry-row"><span>Suit Pressure</span><b id="tPressure">4.3 psi</b></div>
+        <div class="telemetry-row"><span>Cabin Temp</span><b id="tTemp">22.1 °C</b></div>
+        <div class="telemetry-row"><span>O₂ Level</span><b id="tO2">98.2 %</b></div>
+        <div class="telemetry-row"><span>CO₂</span><b id="tCO2">0.4 %</b></div>
+        <div class="telemetry-row"><span>Radiation</span><b id="tRad">0.12 mSv</b></div>
+      </div>
+
+      <!-- TOP RIGHT: Vitals -->
+      <div class="hud-panel top-right">
+        <div class="panel-title">◈ VITALS <span class="demo-badge">SIM</span></div>
+        <div class="telemetry-row"><span>Heart Rate</span><b id="tHR">72 bpm</b></div>
+        <div class="telemetry-row"><span>SpO₂</span><b id="tSpO2">98 %</b></div>
+        <div class="telemetry-row"><span>Resp Rate</span><b id="tRR">14 /min</b></div>
+        <div class="telemetry-row"><span>Body Temp</span><b id="tBody">36.7 °C</b></div>
+        <canvas id="heartWave" width="220" height="42"></canvas>
+      </div>
+
+      <!-- LEFT: Body systems -->
+      <div class="hud-panel left-body">
+        <div class="panel-title">◈ BODY SYSTEMS</div>
+        <svg class="body-svg" viewBox="0 0 80 160" aria-hidden="true">
+          <circle cx="40" cy="16" r="10" class="body-part" data-sys="neuro"/>
+          <rect x="28" y="30" width="24" height="40" rx="6" class="body-part" data-sys="cardio"/>
+          <rect x="20" y="34" width="6" height="28" rx="3" class="body-part" data-sys="resp"/>
+          <rect x="54" y="34" width="6" height="28" rx="3" class="body-part" data-sys="resp"/>
+          <rect x="30" y="72" width="20" height="30" rx="4" class="body-part" data-sys="immune"/>
+          <rect x="30" y="104" width="8" height="48" rx="3" class="body-part" data-sys="musculo"/>
+          <rect x="42" y="104" width="8" height="48" rx="3" class="body-part" data-sys="musculo"/>
+        </svg>
+        <div class="sys-legend">
+          <span data-sys="cardio" class="sys-item">Cardio</span>
+          <span data-sys="resp" class="sys-item">Resp</span>
+          <span data-sys="immune" class="sys-item">Immune</span>
+          <span data-sys="musculo" class="sys-item">Musculo</span>
+          <span data-sys="neuro" class="sys-item">Neuro</span>
+        </div>
+      </div>
+
+      <!-- RIGHT: AI Health Intelligence -->
+      <div class="hud-panel right-ai">
+        <div class="panel-title">◈ AI HEALTH INTELLIGENCE</div>
+        <div id="aiAlerts" class="ai-alerts">
+          <div class="alert-item ok">All vitals within baseline</div>
+        </div>
+        <div class="ai-recommendation" id="aiRec">Recommendation: Maintain hydration. Continue monitoring.</div>
+        <button id="runScanBtn" class="mini-btn">RUN HEALTH SCAN</button>
+      </div>
+
+      <!-- BOTTOM LEFT: Astronaut ID -->
+      <div class="hud-panel bottom-left">
+        <div class="id-line"><span>CREW</span><b>CDR. A. VEGA</b></div>
+        <div class="id-line"><span>MISSION ID</span><b>AX-7741</b></div>
+        <div class="id-line"><span>SUIT ID</span><b>EMU-3921</b></div>
+      </div>
+
+      <!-- BOTTOM RIGHT: Comms -->
+      <div class="hud-panel bottom-right">
+        <div class="comms-status"><span class="dot online"></span><b id="commsState">ONLINE</b></div>
+        <div class="id-line"><span>SIGNAL DELAY</span><b id="signalDelay">1.3 s</b></div>
+        <div class="id-line"><span>LINK</span><b>DSN-14</b></div>
+      </div>
+
+      <!-- BOTTOM CENTER: Controls -->
+      <div class="hud-controls">
+        <button class="ctrl-btn" id="scanCtrl" title="Health Scan">◉<span>SCAN</span></button>
+        <button class="ctrl-btn" id="aiCtrl" title="AI Copilot">✦<span>COPILOT</span></button>
+        <button class="ctrl-btn danger" id="emergCtrl" title="Emergency">✚<span>EMERGENCY</span></button>
+        <button class="ctrl-btn" id="camSwitchCtrl" title="Switch Camera">⇄<span>CAM</span></button>
+        <button class="ctrl-btn" id="camToggleCtrl" title="Camera On/Off">◐<span>FEED</span></button>
+        <button class="ctrl-btn" id="fsCtrl" title="Fullscreen">⛶<span>FULL</span></button>
+        <button class="ctrl-btn" id="exitCtrl" title="Return to Dashboard">↩<span>EXIT</span></button>
+      </div>
+
+      <!-- HUD Brightness / Sound -->
+      <div class="hud-settings">
+        <label>☀ <input type="range" id="brightness" min="20" max="100" value="100"></label>
+        <button id="soundCtrl" class="icon-btn" title="Sound">🔊</button>
+      </div>
+
+      <!-- Scan overlay -->
+      <div id="scanOverlay" class="scan-overlay hidden">
+        <div class="scan-circle"></div>
+        <div class="scan-text" id="scanText">ANALYZING…</div>
+      </div>
+    </div>
+
+    <!-- AI Copilot Panel -->
+    <div id="copilotPanel" class="side-panel hidden">
+      <div class="side-panel-head">
+        <h3>AI MEDICAL COPILOT</h3>
+        <button class="close-btn" data-close="copilotPanel">✕</button>
+      </div>
+      <div id="chatLog" class="chat-log">
+        <div class="msg bot">Hello Commander. I'm ASTRA Copilot. Ask me about your vitals, risks, or protocols.</div>
+      </div>
+      <div class="chat-input">
+        <input id="chatInput" type="text" placeholder="Ask a health question…" />
+        <button id="chatSend">SEND</button>
+      </div>
+      <div class="quick-prompts">
+        <button data-prompt="What is my current health status?">Status</button>
+        <button data-prompt="Any risk of bone loss?">Bone Loss</button>
+        <button data-prompt="What should I do in a medical emergency?">Emergency</button>
+        <button data-prompt="How is my cardiovascular system?">Cardio</button>
+      </div>
+    </div>
+
+    <!-- Emergency Panel -->
+    <div id="emergencyPanel" class="side-panel hidden emergency">
+      <div class="side-panel-head">
+        <h3>⚠ EMERGENCY MEDICAL ASSISTANCE</h3>
+        <button class="close-btn" data-close="emergencyPanel">✕</button>
+      </div>
+      <div class="emergency-body">
+        <p class="pulse-red">EMERGENCY PROTOCOL ENGAGED</p>
+        <ol>
+          <li>Verify airway, breathing, circulation (ABC).</li>
+          <li>Contact Mission Control — link status shown bottom right.</li>
+          <li>Administer onboard medical kit per crew medical officer checklist.</li>
+          <li>Record incident in the log below.</li>
+        </ol>
+        <textarea id="incidentLog" placeholder="Describe the incident…"></textarea>
+        <button id="recordIncidentBtn" class="astro-btn primary">RECORD INCIDENT</button>
+        <div id="incidentSaved" class="saved-note hidden">✓ Incident recorded locally.</div>
+      </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="camera.js"></script>
+  <script src="health.js"></script>
+  <script src="hud.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
